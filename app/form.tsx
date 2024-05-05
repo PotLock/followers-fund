@@ -6,7 +6,25 @@ import { redirectToPayouts, savePayout, votePayout } from "./actions";
 import { v4 as uuidv4 } from "uuid";
 import { Payout } from "./types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ethers } from "ethers";
+import { sendTransaction } from '@wagmi/core'
+import { parseEther } from 'viem'
+import { config } from './config'
+import { Account } from './account'
+import { WalletOptions } from './wallet-options'
+import {  useAccount , useDisconnect } from 'wagmi'
+
+function ConnectWallet() {
+  const { isConnected } = useAccount()
+  if (isConnected) return <Account />
+  return <WalletOptions />
+}
+
+const sendTranstaction = async (address: string, amount: string) => {
+    const result = await sendTransaction(config, {
+        to: `0x${address}`,
+        value: parseEther(amount),
+    })
+}
 
 type PayoutState = {
     newPayout: Payout;
@@ -18,6 +36,7 @@ type PayoutState = {
 type Props = {
     fId: string;
 }
+declare let window: any;
 export function PayoutCreateForm({ fId }: Props) {
 
     let formRef = useRef<HTMLFormElement>(null);
@@ -125,7 +144,7 @@ export function PayoutCreateForm({ fId }: Props) {
                         onChange={e => setSelectedUser1(e.target.value)}
                     >
                         {userFollow && userFollow.map((user: any) => (
-                            <option value={`${user.username}-${user.fid}`}>
+                            <option value={`${user.username}-${user.fid}-${user.custodyAddress}`}>
                                 <img src={user.pfp.url}></img>
                                 {user.displayName}
                             </option>
@@ -140,7 +159,7 @@ export function PayoutCreateForm({ fId }: Props) {
                         onChange={e => setSelectedUser2(e.target.value)}
                     >
                         {userFollow && userFollow.map((user: any) => (
-                            <option value={`${user.username}-${user.fid}`}>
+                            <option value={`${user.username}-${user.fid}-${user.custodyAddress}`}>
                                 {user.displayName}
                             </option>
                         ))}
@@ -154,7 +173,7 @@ export function PayoutCreateForm({ fId }: Props) {
                         onChange={e => setSelectedUser3(e.target.value)}
                     >
                         {userFollow && userFollow.map((user: any) => (
-                            <option value={`${user.username}-${user.fid}`}>
+                            <option value={`${user.username}-${user.fid}-${user.custodyAddress}`}>
                                 {user.displayName}
                             </option>
                         ))}
@@ -168,7 +187,7 @@ export function PayoutCreateForm({ fId }: Props) {
                         onChange={e => setSelectedUser4(e.target.value)}
                     >
                         {userFollow && userFollow.map((user: any) => (
-                            <option value={`${user.username}-${user.fid}`}>
+                            <option value={`${user.username}-${user.fid}-${user.custodyAddress}`}>
                                 {user.displayName}
                             </option>
                         ))}
@@ -268,7 +287,8 @@ export function PayoutVoteForm({ payout, viewResults }: { payout: Payout, viewRe
     const handleVote = (index: number) => {
         setSelectedOption(index)
     };
-    
+    const { address } = useAccount()
+    const { disconnect } = useDisconnect()
     return (
         <div className="max-w-sm rounded overflow-hidden shadow-lg p-4 m-4">
             <div className="font-bold text-xl mb-2">{payout.title}</div>
@@ -308,16 +328,44 @@ export function PayoutVoteForm({ payout, viewResults }: { payout: Payout, viewRe
                     >Back
                     </button>
 
-                    <a 
-                    className="bg-blue-500 mr-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    href={` https://warpcast.com/~/compose?text="👤💸 followers.fund quadratically airdrop your followers with the most clout Make the sign in button in Center and the footer 
+                    <a
+                        className="bg-blue-500 mr-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        href={` https://warpcast.com/~/compose?text="👤💸 followers.fund quadratically airdrop your followers with the most clout Make the sign in button in Center and the footer 
 ❤️ by 🫕 Potlock"&embeds[]=${process.env['HOST']}/api/payout?id=${payout.id}`}> Share Cast</a>
+                    <div className="flex flex-col space-y-4 pt-4">
+                    {address ? <>
+                        <div>  <button type="button"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => sendTranstaction(payout.user1.split("-")[2].replace('0x',''), payout.amount1.toString())}
+                        >Payout User 1
+                        </button>
+                        </div>
+                        <div> <button type="button"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => sendTranstaction(payout.user1.split("-")[2].replace('0x',''), payout.amount2.toString())}
+                        >Payout User 2
+                        </button></div>
+                        <div><button type="button"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => sendTranstaction(payout.user1.split("-")[2].replace('0x',''), payout.amount3.toString())}
+                        >Payout User 3
+                        </button></div>
+                        <div> <button type="button"
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            onClick={() => sendTranstaction(payout.user1.split("-")[2].replace('0x',''), payout.amount4.toString())}
+                        >Payout User 4
+                        </button>
+                        
+                        </div>
+                        <div><button onClick={() => disconnect()}  className="bg-blue-500 mr-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Disconnect</button></div>
+                    </>:<ConnectWallet /> }
+                       
+                    </div>
 
-                    <button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                        type="submit"
-                    >Payout
-                    </button>
+
+
+
+
                 </>
                     :
                     <button
