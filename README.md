@@ -1,9 +1,27 @@
-# Farcaster Frames Payout app
+# followers-fund
+Reward your followers with the most clout via quadratic funding. Built on Farcaster &amp; base
 
-A example Payout app using [Farcaster Frames](https://warpcast.notion.site/Farcaster-Frames-4bd47fe97dc74a42a48d3a234636d8c5). 
 
-This example lets you create a payout and have users follow on it. The FrameAction is authenticated against a hub 
-so the follows cannot be spoofed (if `HUB_URL` is provided), and the results are stored in a redis database. 
+<img width="757" alt="shapes at 24-05-04 15 05 11" src="https://github.com/PotLock/followers-fund/assets/45281667/b1cbabe5-2852-4f41-ad38-01857415c386">
+
+![followersfundicon (1)](https://github.com/PotLock/followers-fund/assets/45281667/3c1024d2-41b2-42c5-b248-62e85ea5724b)
+
+
+# About
+Farcaster client that allows you to filter followers and rewards them using quadratic funding based on their amount of followers and pay them out in Base + post the results to Farcaster tagging everyone who has been paid out.
+
+# Demo
+Quick Pitch (Farcon) https://docs.google.com/presentation/d/1qU4OqdF0FwR2n4klJhCwJM5AM_lIGzbFddfed0LbxtY/edit#slide=id.g2d26cbb005d_0_5
+Demo at https://followers.fund
+
+
+# You will need
+- A farcaster account (sigin with warpcast)
+- A wallet on Base with tokens
+# Resources
+Backlog https://github.com/orgs/PotLock/projects/12/views/1
+
+
 
 
 ## Demo
