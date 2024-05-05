@@ -29,7 +29,7 @@ const configFarcaster = {
   relay: "https://relay.farcaster.xyz",
   rpcUrl: "https://mainnet.optimism.io",
   siweUri: "https://www.followers.fund/",
-  domain: "https://www.followers.fund/",
+  domain: "followers.fund",
 };
 
 export default function Home() {
