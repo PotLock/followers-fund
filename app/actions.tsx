@@ -25,7 +25,16 @@ export async function savePayout(payout: Payout, formData: FormData) {
   revalidatePath("/payouts");
   redirect(`/payouts/${payout.id}`);
 }
+export async function createPayout(payout: any) {
 
+  await kv.hset(`payout:${payout.id}`, payout);
+  await kv.expire(`payout:${payout.id}`, PAYOUT_EXPIRY);
+  await kv.zadd("payouts_by_date", {
+    score: Number(payout.created_at),
+    member: payout.id,
+  });
+
+}
 export async function votePayout(payout: Payout, userIndex: number) {
   await kv.hincrby(`payout:${payout.id}`, `votes${userIndex}`, 1);
 
