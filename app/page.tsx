@@ -9,6 +9,7 @@ import {
   StatusAPIResponse,
 } from "@farcaster/auth-kit";
 import { PayoutCreateForm } from "./form";
+import { PayoutCreateForm1 } from "./createPayoutForm"
 import { useCallback, useState } from "react";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, useAccount } from 'wagmi'
@@ -37,8 +38,8 @@ export default function Home() {
     <>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <div className="flex flex-col items-center justify-center min-h-screen py-2">
-            <main className="flex flex-col items-center justify-center flex-1 px-4 sm:px-20 text-center">
+          <div className="flex h-full flex-col ">
+            <main className="flex justify-center ">
               <AuthKitProvider config={configFarcaster}>
                 <Content />
               </AuthKitProvider>
@@ -110,13 +111,14 @@ function Profile() {
   const { data: session } = useSession();
 
   return session ? (
-    <div style={{ fontFamily: "sans-serif" }}>
-      <p>Signed in as {session.user?.name} </p>
-      <h2>Create payout</h2>
-      <div className="flex flex-wrap items-center justify-around max-w-4xl my-8 sm:w-full bg-white rounded-md shadow-xl h-full border border-gray-100">
-        <PayoutCreateForm fId={session.user?.name as string} />
+
+    <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+    <div className="md:flex">
+      <div className="p-8">
+      <PayoutCreateForm1 fid={session.user?.name as string} />
       </div>
     </div>
+  </div>
   ) : (
     <p>
       Click the &quot;Sign in with Farcaster&quote; button above, then scan the QR code to

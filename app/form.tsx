@@ -12,7 +12,7 @@ import { config } from './config'
 import { Account } from './account'
 import { WalletOptions } from './wallet-options'
 import {  useAccount , useDisconnect } from 'wagmi'
-import {Select, SelectItem, Avatar} from "@nextui-org/react";
+
 
 function ConnectWallet() {
   const { isConnected } = useAccount()
@@ -214,28 +214,7 @@ export function PayoutCreateForm({ fId }: Props) {
                         type="number"
                         name="totalAmount"
                     />
-    <Select
-                        items={userFollow}
-                        label="Assigned to"
-                        placeholder="Select a user"
-                        labelPlacement="outside"
-                        classNames={{
-                            base: "max-w-xs",
-                            trigger: "h-12",
-                        }}
-                    >
-                        {(user: any) => (
-                            <SelectItem key={user.fid} textValue={user.custodyAddress}>
-                                <div className="flex gap-2 items-center">
-                                    
-                                    <div className="flex flex-col">
-                                        <span className="text-small">{user.username}</span>
-                                        <span className="text-tiny text-default-400">{user.custodyAddress}</span>
-                                    </div>
-                                </div>
-                            </SelectItem>
-                        )}
-                    </Select>
+
                     <div className={"pt-2 flex justify-end"}>
                         <button
                             className={clsx(
