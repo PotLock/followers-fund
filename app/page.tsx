@@ -3,7 +3,7 @@ import "@farcaster/auth-kit/styles.css";
 
 import Head from "next/head";
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
-import {Card, CardHeader, CardBody, CardFooter, Divider, Link, Image} from "@nextui-org/react";
+import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from "@nextui-org/react";
 import {
   SignInButton,
   AuthKitProvider,
@@ -112,14 +112,15 @@ function Content() {
 function Profile() {
   const { data: session } = useSession();
   const [payouts, setPayouts] = useState([]);
+  const getPayout = async () => {
+    const res = await fetch(`/api/payout`);
+    
+    const data: any = await res.json();
+    console.log("data",data)
+    setPayouts(data.result);
+  }
   useEffect(() => {
-    fetch(`/api/payout`)
-      .then((res) => {
-        return res.json();
-      })
-      .then((data) => {
-        setPayouts(data.result);
-      });
+    getPayout();
   }, []);
 
   return session ? (
@@ -128,34 +129,39 @@ function Profile() {
       <div className=""></div>
       <div className="flex flex-col max-w-sm ">
         {payouts.map((payout: any) =>
-            <Card className="max-w-[400px] mt-2">
-              <CardHeader className="flex gap-3">
-                <Image
-                  height={40}
-                  radius="sm"
-                  src={payout.user_created.user.pfp_url}
-                  width={40}
-                />
-                <div className="flex flex-col">
-                  <p className="text-md">{payout.user_created.user.display_name}</p>
-                  <p className="text-small text-default-500">{payout.user_created.user.custody_address}</p>
-                </div>
-              </CardHeader>
-              <Divider />
-              <CardBody>
-                <p>Test</p>
-              </CardBody>
-              <Divider />
-              <CardFooter>
-                <Link
-                  isExternal
-                  showAnchorIcon
-                  href="#"
-                >
-                  Visit Cast
-                </Link>
-              </CardFooter>
-            </Card>
+          <Card className="max-w-[400px] mt-2">
+            <CardHeader className="flex gap-3">
+              <Image
+                height={40}
+                radius="sm"
+                src={payout.user_created.user.pfp_url}
+                width={40}
+              />
+              <div className="flex flex-col">
+                <p className="text-md">{payout.user_created.user.display_name}</p>
+                <p className="text-small text-default-500">{payout.user_created.user.custody_address}</p>
+              </div>
+            </CardHeader>
+            <Divider />
+            <CardBody>
+              <p>{payout.id}</p>
+              <Image
+                alt="Woman listing to music"
+                className="object-cover"
+                src={`http://localhost:3000/api/image?id=${payout.id}`}
+              />
+            </CardBody>
+            <Divider />
+            <CardFooter>
+              <Link
+                isExternal
+                showAnchorIcon
+                href="#"
+              >
+                Visit Cast
+              </Link>
+            </CardFooter>
+          </Card>
         )}
         <div className="p-8">
           <PayoutCreateForm1 fid={session.user?.name as string} />
