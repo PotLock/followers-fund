@@ -3,14 +3,14 @@ import "@farcaster/auth-kit/styles.css";
 
 import Head from "next/head";
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
+import {Card, CardHeader, CardBody, CardFooter, Divider, Link, Image} from "@nextui-org/react";
 import {
   SignInButton,
   AuthKitProvider,
   StatusAPIResponse,
 } from "@farcaster/auth-kit";
-import { PayoutCreateForm } from "./form";
 import { PayoutCreateForm1 } from "./createPayoutForm"
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider, useAccount } from 'wagmi'
 import { Account } from './account'
@@ -34,12 +34,13 @@ const configFarcaster = {
 };
 
 export default function Home() {
+
   return (
     <>
       <WagmiProvider config={config}>
         <QueryClientProvider client={queryClient}>
-          <div className="flex h-full flex-col ">
-            <main className="flex justify-center ">
+          <div className=" ">
+            <main className="flex h-screen justify-center p-4">
               <AuthKitProvider config={configFarcaster}>
                 <Content />
               </AuthKitProvider>
@@ -74,6 +75,7 @@ function Content() {
     []
   );
   const { data: session } = useSession();
+
   return (
     <div>
       <div style={{ position: "fixed", top: "12px", right: "12px" }}>
@@ -109,16 +111,57 @@ function Content() {
 
 function Profile() {
   const { data: session } = useSession();
+  const [payouts, setPayouts] = useState([]);
+  useEffect(() => {
+    fetch(`/api/payout`)
+      .then((res) => {
+        return res.json();
+      })
+      .then((data) => {
+        setPayouts(data.result);
+      });
+  }, []);
 
   return session ? (
 
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
-    <div className="md:flex">
-      <div className="p-8">
-      <PayoutCreateForm1 fid={session.user?.name as string} />
+    <div className="flex min-h-dvh flex-col bg-background bg-radial">
+      <div className=""></div>
+      <div className="flex flex-col max-w-sm ">
+        {payouts.map((payout: any) =>
+            <Card className="max-w-[400px] mt-2">
+              <CardHeader className="flex gap-3">
+                <Image
+                  height={40}
+                  radius="sm"
+                  src={payout.user_created.user.pfp_url}
+                  width={40}
+                />
+                <div className="flex flex-col">
+                  <p className="text-md">{payout.user_created.user.display_name}</p>
+                  <p className="text-small text-default-500">{payout.user_created.user.custody_address}</p>
+                </div>
+              </CardHeader>
+              <Divider />
+              <CardBody>
+                <p>Test</p>
+              </CardBody>
+              <Divider />
+              <CardFooter>
+                <Link
+                  isExternal
+                  showAnchorIcon
+                  href="#"
+                >
+                  Visit Cast
+                </Link>
+              </CardFooter>
+            </Card>
+        )}
+        <div className="p-8">
+          <PayoutCreateForm1 fid={session.user?.name as string} />
+        </div>
       </div>
     </div>
-  </div>
   ) : (
     <p>
       Click the &quot;Sign in with Farcaster&quote; button above, then scan the QR code to

@@ -1,6 +1,7 @@
 import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button, user } from "@nextui-org/react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { useOptimistic, useRef, useState, useTransition, useEffect, use } from "react";
+import { redirect } from 'next/navigation'
 
 import { v4 as uuidv4 } from "uuid";
 type Props = {
@@ -126,6 +127,8 @@ export function PayoutCreateForm1({ fid }: Props) {
             usersArr.push(userObj)
 
         }
+        const resUser = await fetch(`/api/current-user?fid=${fid}`)
+        const user = await resUser.json();
         const payout : any = {
             user:usersArr,
             id: uuidv4(),
@@ -134,9 +137,10 @@ export function PayoutCreateForm1({ fid }: Props) {
             network:'',
             token:selectToken,
             tokenAddress:tokenAddress,
+            user_created:user,
             created_at: new Date().getTime(),
         }
-        const response = await fetch('/create-payout', {
+        const response = await fetch('/api/create-payout', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -145,6 +149,9 @@ export function PayoutCreateForm1({ fid }: Props) {
           });
       
           const data = await response.json();
+          if(data.status == "succesful"){
+           // redirect(`/payouts/${payout.id}`);
+          }
           console.log("data",data);
     }
 

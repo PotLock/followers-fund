@@ -18,12 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             await kv.hset(`payout:${payout.id}`, payout);
             await kv.expire(`payout:${payout.id}`, PAYOUT_EXPIRY);
-            const result = await kv.zadd("payouts_by_date", {
+            await kv.zadd("payouts_by_date", {
                 score: Number(payout.created_at),
                 member: payout.id,
             });
 
-            res.send({ result: result });
+            res.send({ status: "succesful" });
 
         } catch (error) {
             console.error(error);
