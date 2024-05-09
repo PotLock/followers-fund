@@ -29,10 +29,11 @@ export async function createPayout(payout: any) {
 
   await kv.hset(`payout:${payout.id}`, payout);
   await kv.expire(`payout:${payout.id}`, PAYOUT_EXPIRY);
-  await kv.zadd("payouts_by_date", {
+  const res = await kv.zadd("payouts_by_date", {
     score: Number(payout.created_at),
     member: payout.id,
   });
+  console.log(res);
 
 }
 export async function votePayout(payout: Payout, userIndex: number) {
