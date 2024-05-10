@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }}>
                     <h2 style={{ textAlign: 'center', color: 'lightgray' }}>{payout.title || "Payout:"}</h2>
                     {
-                        payoutData.users.map((opt, index) => {
+                        payoutData.users.map((opt:any, index:any) => {
                             return (
                                 <div style={{
                                     backgroundColor: showResults ? '#007bff' : '',

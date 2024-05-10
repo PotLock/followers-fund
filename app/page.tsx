@@ -3,7 +3,16 @@ import "@farcaster/auth-kit/styles.css";
 
 import Head from "next/head";
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
-import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from "@nextui-org/react";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Divider,
+  Link,
+  Image,
+} from "@nextui-org/react";
+
 import {
   SignInButton,
   AuthKitProvider,
@@ -95,13 +104,9 @@ function Content() {
             onSignOut={() => signOut()}
           />
         )}
-
         {error && <div>Unable to sign in at this time.</div>}
       </div>
-
-
       <div>
-
         <Profile />
       </div>
 
@@ -114,19 +119,19 @@ function Profile() {
   const [payouts, setPayouts] = useState([]);
   const getPayout = async () => {
     const res = await fetch(`/api/payout`);
-    
     const data: any = await res.json();
-    console.log("data",data)
     setPayouts(data.result);
   }
   useEffect(() => {
     getPayout();
   }, []);
 
-  return session ? (
 
-    <div className="flex min-h-dvh flex-col bg-background bg-radial">
-      <div className=""></div>
+
+  return session ? (
+   
+    <div className="flex min-h-dvh flex-col">
+       <PayoutCreateForm1 fid={session.user?.name as string} />
       <div className="flex flex-col max-w-sm ">
         {payouts.map((payout: any) =>
           <Card className="max-w-[400px] mt-2">
@@ -158,13 +163,13 @@ function Profile() {
                 showAnchorIcon
                 href="#"
               >
-                Visit Cast
+                Cast
               </Link>
             </CardFooter>
           </Card>
         )}
         <div className="p-8">
-          <PayoutCreateForm1 fid={session.user?.name as string} />
+         
         </div>
       </div>
     </div>

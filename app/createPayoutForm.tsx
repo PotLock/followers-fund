@@ -1,4 +1,4 @@
-import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button, user } from "@nextui-org/react";
+import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button,  useDisclosure , user, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { useOptimistic, useRef, useState, useTransition, useEffect, use } from "react";
 import { redirect } from 'next/navigation'
@@ -40,7 +40,8 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [totalAmount, setTotalAmount] = useState("0");
     const [totalFollower, setTotalFollower] = useState(0);
     const [tokenAddress, setTokenAddress] = useState("");
-    
+    const [title, setTitle] = useState("");
+
     const handleSelectionChangeFilter = async (e: any) => {
         const users = e.target.value.split(",");
         if (users[0] !== '') {
@@ -112,215 +113,227 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
 
     };
-    const createPayoutButton = async() =>{
-        let userObj :any= {}
+    const createPayoutButton = async () => {
+        let userObj: any = {}
         let usersArr = []
-        const userData : any = selectUsers
+        const userData: any = selectUsers
         for (const user of userData) {
             userObj = {
-                fid : user.fid,
-                pfp : user.pfp,
-                username:user.username,
-                matched:removeCommonElements(user.follower , filterData).length,
-                allocations :(parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0
+                fid: user.fid,
+                pfp: user.pfp,
+                username: user.username,
+                matched: removeCommonElements(user.follower, filterData).length,
+                allocations: (parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0
             }
             usersArr.push(userObj)
 
         }
         const resUser = await fetch(`/api/current-user?fid=${fid}`)
         const user = await resUser.json();
-        const payout : any = {
-            user:usersArr,
+        const payout: any = {
+            title: title,
+            user: usersArr,
             id: uuidv4(),
-            type:selectType,
-            amount:totalAmount,
-            network:'',
-            token:selectToken,
-            tokenAddress:tokenAddress,
-            user_created:user,
+            type: selectType,
+            amount: totalAmount,
+            network: '',
+            token: selectToken,
+            tokenAddress: tokenAddress,
+            user_created: user,
             created_at: new Date().getTime(),
         }
         const response = await fetch('/api/create-payout', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(payout), // Replace with your actual data
-          });
-      
-          const data = await response.json();
-          if(data.status == "succesful"){
-           // redirect(`/payouts/${payout.id}`);
-          }
-          console.log("data",data);
-    }
+        });
 
+        const data = await response.json();
+        if (data.status == "succesful") {
+            // redirect(`/payouts/${payout.id}`);
+        }
+        console.log("data", data);
+    }
+    const { isOpen, onOpen, onOpenChange } = useDisclosure();
     return (
         <>
-            <div>
-                <Select
-                    items={userFollow}
-                    label="Fund to"
-                    isMultiline={true}
-                    selectionMode="multiple"
-                    placeholder="Select user"
-                    variant="bordered"
-                    isRequired
-                    onChange={handleSelectionChange}
-                    renderValue={(items) => {
-                        return (
-                            <div className="flex flex-wrap gap-2">
-                                {items.map((item) => (
-                                    <Chip
-                                        avatar={
-                                            <Avatar
-                                                src={item.data.pfp.url}
-                                            />
-                                        }
-                                        key={item.key}>{item.data.username}</Chip>
-                                ))}
-                            </div>
-                        );
-                    }}
-                >
-                    {(user: any) => (
-                        <SelectItem key={`${user.fid}|${user.username}|${user.custodyAddress}|${user.pfp.url}`} textValue={`${user.fid}-${user.username}-${user.custodyAddress}-${user.pfp.ur}`}>
-                            <div className="flex gap-2 items-center">
-                                <Avatar alt={user.username} className="flex-shrink-0" size="sm" src={user.pfp.url} />
-                                <div className="flex flex-col">
-                                    <span className="text-small">{user.username}</span>
-                                    <span className="text-tiny text-default-400">{user.custodyAddress}</span>
-                                </div>
-                            </div>
-                        </SelectItem>
-                    )}
-                </Select>
+            <div className="py-2 ">
+                <Button onPress={onOpen} color="primary">Create Payout</Button>
             </div>
-            <div>
-                <Select
-                    variant="bordered"
-                    label="Select Type"
-                    className="max-w-xs"
-                    isRequired
-                    onChange={handleSelectionType}
-                    defaultSelectedKeys={"eth"}
-
-                >
-                    {fundType.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                        </SelectItem>
-                    ))}
-                </Select>
-            </div>
-
-            {selectType == "followers" && (
-                <>
-                    <div>
-                        <Select
-                            items={filterUserFollow}
-                            label="Filter User Flow"
-                            isMultiline={true}
-                            selectionMode="multiple"
-                            placeholder="Select user"
-                            variant="bordered"
-                            isRequired
-                            onChange={handleSelectionChangeFilter}
-                            renderValue={(items) => {
-                                return (
-                                    <div className="flex flex-wrap gap-2">
-                                        {items.map((item) => (
-                                            <Chip
-                                                avatar={
-                                                    <Avatar
-                                                        src={item.data.pfp.url}
-                                                    />
-                                                }
-                                                key={item.key}>{item.data.username}</Chip>
-                                        ))}
-                                    </div>
-                                );
-                            }}
-                        >
-                            {(user: any) => (
-                                <SelectItem key={`${user.fid}|${user.username}|${user.custodyAddress}|${user.pfp.url}`} textValue={`${user.fid}-${user.username}-${user.custodyAddress}-${user.pfp.ur}`}>
-                                    <div className="flex gap-2 items-center">
-                                        <Avatar alt={user.username} className="flex-shrink-0" size="sm" src={user.pfp.url} />
-                                        <div className="flex flex-col">
-                                            <span className="text-small">{user.username}</span>
-                                            <span className="text-tiny text-default-400">{user.custodyAddress}</span>
-                                        </div>
-                                    </div>
-                                </SelectItem>
-                            )}
-                        </Select>
-                    </div>
-                    <div>
-                        <Select
-                            variant="bordered"
-                            label="Select Token"
-                            className="max-w-xs"
-                            onChange={handleSelectionChangeSelecToken}
-                            isRequired
-                        >
-                            {tokenType.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
-                                    {type.label}
-                                </SelectItem>
-                            ))}
-                        </Select>
-                    </div>
-                    {selectToken == "token" && (
-                        <div>
-                            <Input
-                                label="Token Address"
-                                value={tokenAddress}
-                                onValueChange={setTokenAddress}
-                                placeholder="0x0...."
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <Input
-                            type="number"
-                            label="Amount"
-                            value={totalAmount}
-                            onValueChange={setTotalAmount}
-                            placeholder="0.00"
-                        />
-                    </div>
-                    <div>
-                        {selectUsers && selectUsers.map((user: any) =>
-                            <>
-                                <Card className="max-w-[400px]">
-                                    <CardHeader className="flexjustify-between">
-                                        <div className="flex gap-5">
-                                            <Avatar isBordered radius="full" size="md" src={user.pfp} />
-                                            <div className="flex flex-col gap-1 items-start justify-center">
-                                                <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0}</h4>
-                                                <h5 className="text-small tracking-tight text-default-400">{user.custodyAddress}</h5>
+            <Modal
+                isOpen={isOpen}
+                onOpenChange={onOpenChange}
+                placement="top-center"
+            >
+                <ModalContent>
+                    {(onClose) => (
+                        <>
+                            <ModalHeader className="flex flex-col gap-1">Create Payout</ModalHeader>
+                            <ModalBody>
+                                <Input
+                                    label="Title"
+                                    value={title}
+                                    onValueChange={setTitle}
+                                    placeholder="Input title"
+                                    variant="bordered"
+                                />
+                                <Select
+                                    items={userFollow}
+                                    label="Fund to"
+                                    isMultiline={true}
+                                    selectionMode="multiple"
+                                    placeholder="Select user"
+                                    variant="bordered"
+                                    isRequired
+                                    onChange={handleSelectionChange}
+                                    renderValue={(items) => {
+                                        return (
+                                            <div className="flex flex-wrap gap-2">
+                                                {items.map((item) => (
+                                                    <Chip
+                                                        avatar={
+                                                            <Avatar
+                                                                src={item.data.pfp.url}
+                                                            />
+                                                        }
+                                                        key={item.key}>{item.data.username}</Chip>
+                                                ))}
                                             </div>
+                                        );
+                                    }}
+                                >
+                                    {(user: any) => (
+                                        <SelectItem key={`${user.fid}|${user.username}|${user.custodyAddress}|${user.pfp.url}`} textValue={`${user.fid}-${user.username}-${user.custodyAddress}-${user.pfp.ur}`}>
+                                            <div className="flex gap-2 items-center">
+                                                <Avatar alt={user.username} className="flex-shrink-0" size="sm" src={user.pfp.url} />
+                                                <div className="flex flex-col">
+                                                    <span className="text-small">{user.username}</span>
+                                                    <span className="text-tiny text-default-400">{user.custodyAddress}</span>
+                                                </div>
+                                            </div>
+                                        </SelectItem>
+                                    )}
+                                </Select>
+                                <Select
+                                    variant="bordered"
+                                    label="Select Type"
+                                    className=""
+                                    isRequired
+                                    onChange={handleSelectionType}
+                                    defaultSelectedKeys={"eth"}
 
-                                        </div>
+                                >
+                                    {fundType.map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>
+                                            {type.label}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                                {selectType == "followers" && (
+                                    <>
+                                        <Select
+                                            items={filterUserFollow}
+                                            label="Filter User Flow"
+                                            isMultiline={true}
+                                            selectionMode="multiple"
+                                            placeholder="Select user"
+                                            variant="bordered"
+                                            isRequired
+                                            className=""
+                                            onChange={handleSelectionChangeFilter}
+                                            renderValue={(items) => {
+                                                return (
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {items.map((item) => (
+                                                            <Chip
+                                                                avatar={
+                                                                    <Avatar
+                                                                        src={item.data.pfp.url}
+                                                                    />
+                                                                }
+                                                                key={item.key}>{item.data.username}</Chip>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }}
+                                        >
+                                            {(user: any) => (
+                                                <SelectItem key={`${user.fid}|${user.username}|${user.custodyAddress}|${user.pfp.url}`} textValue={`${user.fid}-${user.username}-${user.custodyAddress}-${user.pfp.ur}`}>
+                                                    <div className="flex gap-2 items-center">
+                                                        <Avatar alt={user.username} className="flex-shrink-0" size="sm" src={user.pfp.url} />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-small">{user.username}</span>
+                                                            <span className="text-tiny text-default-400">{user.custodyAddress}</span>
+                                                        </div>
+                                                    </div>
+                                                </SelectItem>
+                                            )}
+                                        </Select>
+                                        <Select
+                                            variant="bordered"
+                                            label="Select Token"
+                                            className=""
+                                            onChange={handleSelectionChangeSelecToken}
+                                            isRequired
+                                        >
+                                            {tokenType.map((type) => (
+                                                <SelectItem key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                        {selectToken == "token" && (
+                                            <Input
+                                                label="Token Address"
+                                                value={tokenAddress}
+                                                onValueChange={setTokenAddress}
+                                                placeholder="0x0...."
+                                                variant="bordered"
+                                            />
+                                        )}
 
-                                    </CardHeader>
-                                </Card>
-                            </>
-                        )}
+                                        <Input
+                                            type="number"
+                                            label="Amount"
+                                            value={totalAmount}
+                                            onValueChange={setTotalAmount}
+                                            placeholder="0.00"
+                                            variant="bordered"
+                                        />
+                                        {selectUsers && selectUsers.map((user: any) =>
+                                            <>
+                                                <Card className="max-w-[400px]">
+                                                    <CardHeader className="flexjustify-between">
+                                                        <div className="flex gap-5">
+                                                            <Avatar isBordered radius="full" size="md" src={user.pfp} />
+                                                            <div className="flex flex-col gap-1 items-start justify-center">
+                                                                <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0}</h4>
+                                                                <h5 className="text-small tracking-tight text-default-400">{user.custodyAddress}</h5>
+                                                            </div>
 
+                                                        </div>
 
-                    </div>
-                    <div>
-                        <Button color="primary" onClick={createPayoutButton}>
-                            Create
-                        </Button>
-                    </div>
-                </>
-            )}
-
-
-
+                                                    </CardHeader>
+                                                </Card>
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="danger" variant="flat" onPress={onClose}>
+                                    Close
+                                </Button>
+                                <Button color="primary" onPress={createPayoutButton} >
+                                    Create
+                                </Button>
+                            </ModalFooter>
+                        </>
+                    )}
+                </ModalContent>
+            </Modal>
         </>
 
     )

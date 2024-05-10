@@ -69,6 +69,7 @@ export async function generateMetadata(
         metadataBase: new URL(process.env['HOST'] || '')
     }
 }
+
 function getMeta(
     payout: Payout
 ) {
