@@ -1,7 +1,7 @@
-import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button,  useDisclosure , user, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
+import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button, useDisclosure, user, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
 import { useOptimistic, useRef, useState, useTransition, useEffect, use } from "react";
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 
 import { v4 as uuidv4 } from "uuid";
 type Props = {
@@ -41,7 +41,8 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [totalFollower, setTotalFollower] = useState(0);
     const [tokenAddress, setTokenAddress] = useState("");
     const [title, setTitle] = useState("");
-
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter()
     const handleSelectionChangeFilter = async (e: any) => {
         const users = e.target.value.split(",");
         if (users[0] !== '') {
@@ -113,7 +114,9 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
 
     };
+
     const createPayoutButton = async () => {
+        setIsLoading(true)
         let userObj: any = {}
         let usersArr = []
         const userData: any = selectUsers
@@ -121,6 +124,7 @@ export function PayoutCreateForm1({ fid }: Props) {
             userObj = {
                 fid: user.fid,
                 pfp: user.pfp,
+                custodyAddress: user.custodyAddress,
                 username: user.username,
                 matched: removeCommonElements(user.follower, filterData).length,
                 allocations: (parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0
@@ -152,14 +156,16 @@ export function PayoutCreateForm1({ fid }: Props) {
 
         const data = await response.json();
         if (data.status == "succesful") {
-            // redirect(`/payouts/${payout.id}`);
+            router.push(`/payouts/${payout.id}`)
+            
         }
+        setIsLoading(false)
         console.log("data", data);
     }
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     return (
         <>
-            <div className="py-2 ">
+            <div className="py-2 grid justify-items-end">
                 <Button onPress={onOpen} color="primary">Create Payout</Button>
             </div>
             <Modal
@@ -326,7 +332,30 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Button color="danger" variant="flat" onPress={onClose}>
                                     Close
                                 </Button>
-                                <Button color="primary" onPress={createPayoutButton} >
+                                <Button color="primary"
+                                    isLoading = {isLoading}
+                                    spinner={
+                                        <svg
+                                            className="animate-spin h-5 w-5 text-current"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                fill="currentColor"
+                                            />
+                                        </svg>
+                                    } onPress={createPayoutButton} >
                                     Create
                                 </Button>
                             </ModalFooter>

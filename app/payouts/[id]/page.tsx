@@ -1,36 +1,22 @@
 import {kv} from "@vercel/kv";
 import {Payout} from "@/app/types";
-import {PayoutVoteForm} from "@/app/form";
+import { PayoutDetail } from "@/app/detail"
 import Head from "next/head";
 import {Metadata, ResolvingMetadata} from "next";
 
-async function getPayout(id: string): Promise<Payout> {
-    let nullPayout = {
-        id: "",
-        title: "No payout found",
-        user1: "",
-        user2: "",
-        user3: "",
-        user4: "",
-        amount1: 0,
-        amount2: 0,
-        amount3: 0,
-        amount4: 0,
-        token:"",
-        totalAmount:0,
-        created_at: 0,
-    };
+const  getPayout = async(id: string) => {
 
     try {
-        let payout: Payout | null = await kv.hgetall(`payout:${id}`);
+        let payout: any | null = await kv.hgetall(`payout:${id}`);
+        console.log(payout)
         if (!payout) {
-            return nullPayout;
+            return null;
         }
 
         return payout;
     } catch (error) {
         console.error(error);
-        return nullPayout;
+        return null;
     }
 }
 
@@ -52,8 +38,8 @@ export async function generateMetadata(
         "fc:frame:post_url": `${process.env['HOST']}/api/payout?id=${id}`,
         "fc:frame:image": `${process.env['HOST']}/api/image?id=${id}`,
     };
-    [payout.user1, payout.user2, payout.user3, payout.user4].filter(o => o !== "").map((user, index) => {
-        fcMetadata[`fc:frame:button:${index + 1}`] = user.split("-")[0];
+    payout.user.filter((o:any) => o !== "").map((user:any, index:any) => {
+        fcMetadata[`fc:frame:button:${index + 1}`] = user.username;
     })
 
 
@@ -88,9 +74,9 @@ export default async function Page({params}: { params: {id: string}}) {
 
     return(
         <>
-            <div className="flex flex-col items-center justify-center min-h-screen py-2">
-                <main className="flex flex-col items-center justify-center flex-1 px-4 sm:px-20 text-center">
-                    <PayoutVoteForm payout={payout}/>
+            <div className="flex flex-col items-center min-h-screen py-2">
+                <main className="flex flex-col flex-1 px-4 sm:px-20">
+                    <PayoutDetail payout={payout}/>
                 </main>
             </div>
         </>
