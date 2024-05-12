@@ -11,8 +11,13 @@ export const fundType = [
     { label: "Amount of followers", value: "followers", description: "Amount of followers" },
 ];
 export const tokenType = [
-    { label: "Eth", value: "eth", description: "Ethereum" },
-    { label: "Token", value: "token", description: "Token" },
+    { label: "Ethereum", value: "ethereum", description: "Ethereum" },
+    { label: "Address Token", value: "token", description: "Token" },
+];
+
+export const network = [
+    { label: "Ethereum", value: "ethereum", description: "Ethereum" },
+    { label: "Base", value: "Base", description: "Base" },
 ];
 
 function removeCommonElements(a: any, b: any) {
@@ -34,7 +39,8 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [userFollow, setUserFollow] = useState([]);
     const [selectUsers, setSelectUsers] = useState([]);
     const [selectType, setSelectType] = useState("");
-    const [selectToken, setSelectToken] = useState("");
+    const [selectToken, setSelectToken] = useState(null);
+    const [selectNetwork, setSelectNetwork] = useState(null);
     const [filterUserFollow, setFilterUserFollow] = useState([]);
     const [filterData, setFilterData] = useState([]);
     const [totalAmount, setTotalAmount] = useState("0");
@@ -63,16 +69,20 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
     }
     const handleSelectionType = async (e: any) => {
-        console.log(e.target.value)
+        console.log("setSelectType",e.target.value == "")
         setSelectType(e.target.value)
     }
-    const handleSelectionChangeSelecToken = async (e: any) => {
+    const handleSelectionChangeSelectNetwork = async (e: any) => {
+        console.log(e.target.value)
+        setSelectNetwork(e.target.value)
+    }
+    const handleSelectionChangeSelectToken = async (e: any) => {
         console.log(e.target.value)
         setSelectToken(e.target.value)
     }
-
     const handleSelectionChange = async (e: any) => {
         const users = e.target.value.split(",");
+   
         let countTotalFollower = 0;
         if (users[0] !== '') {
             const usersSelected: any = [];
@@ -145,6 +155,7 @@ export function PayoutCreateForm1({ fid }: Props) {
             tokenAddress: tokenAddress,
             user_created: user,
             created_at: new Date().getTime(),
+            payout_status:false,
         }
         const response = await fetch('/api/create-payout', {
             method: 'POST',
@@ -157,8 +168,9 @@ export function PayoutCreateForm1({ fid }: Props) {
         const data = await response.json();
         if (data.status == "succesful") {
             router.push(`/payouts/${payout.id}`)
-            
+
         }
+        // Check data before creat payout
         setIsLoading(false)
         console.log("data", data);
     }
@@ -225,11 +237,9 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Select
                                     variant="bordered"
                                     label="Select Type"
-                                    className=""
                                     isRequired
                                     onChange={handleSelectionType}
                                     defaultSelectedKeys={"eth"}
-
                                 >
                                     {fundType.map((type) => (
                                         <SelectItem key={type.value} value={type.value}>
@@ -246,8 +256,6 @@ export function PayoutCreateForm1({ fid }: Props) {
                                             selectionMode="multiple"
                                             placeholder="Select user"
                                             variant="bordered"
-                                            isRequired
-                                            className=""
                                             onChange={handleSelectionChangeFilter}
                                             renderValue={(items) => {
                                                 return (
@@ -279,9 +287,22 @@ export function PayoutCreateForm1({ fid }: Props) {
                                         </Select>
                                         <Select
                                             variant="bordered"
+                                            label="Select Network"
+                                            className=""
+                                            onChange={handleSelectionChangeSelectNetwork}
+                                            isRequired
+                                        >
+                                            {network.map((type) => (
+                                                <SelectItem key={type.value} value={type.value}>
+                                                    {type.label}
+                                                </SelectItem>
+                                            ))}
+                                        </Select>
+                                        <Select
+                                            variant="bordered"
                                             label="Select Token"
                                             className=""
-                                            onChange={handleSelectionChangeSelecToken}
+                                            onChange={handleSelectionChangeSelectToken}
                                             isRequired
                                         >
                                             {tokenType.map((type) => (
@@ -308,7 +329,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                             placeholder="0.00"
                                             variant="bordered"
                                         />
-                                        {selectUsers && selectUsers.map((user: any) =>
+                                        {selectUsers.length > 0 && selectUsers.map((user: any) =>
                                             <>
                                                 <Card className="max-w-[400px]">
                                                     <CardHeader className="flexjustify-between">
@@ -332,8 +353,10 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Button color="danger" variant="flat" onPress={onClose}>
                                     Close
                                 </Button>
-                                <Button color="primary"
-                                    isLoading = {isLoading}
+                                <Button
+                                    color="primary"
+                                    isLoading={isLoading}
+                                    isDisabled={ selectUsers.length == 0 || selectType == ""  }
                                     spinner={
                                         <svg
                                             className="animate-spin h-5 w-5 text-current"
@@ -355,7 +378,9 @@ export function PayoutCreateForm1({ fid }: Props) {
                                                 fill="currentColor"
                                             />
                                         </svg>
-                                    } onPress={createPayoutButton} >
+                                    }
+                                    onPress={createPayoutButton}
+                                >
                                     Create
                                 </Button>
                             </ModalFooter>

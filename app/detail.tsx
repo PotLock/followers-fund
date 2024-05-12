@@ -1,18 +1,19 @@
 
 "use client";
 
-import clsx from "clsx";
-import { useOptimistic, useRef, useState, useTransition, useEffect } from "react";
-import { redirectToPayouts, savePayout, votePayout } from "./actions";
-import { v4 as uuidv4 } from "uuid";
-import { Payout } from "./types";
-import { useRouter, useSearchParams } from "next/navigation";
-import { sendTransaction } from '@wagmi/core'
+import { useState, useCallback } from "react";
+import { sendTransaction, writeContract } from '@wagmi/core'
 import { parseEther } from 'viem'
 import { config } from './config'
 import { Account } from './account'
 import { WalletOptions } from './wallet-options'
-import { useAccount, useDisconnect } from 'wagmi'
+import { useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt ,type BaseError} from 'wagmi'
+import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
+import {
+    SignInButton,
+    AuthKitProvider,
+    StatusAPIResponse,
+} from "@farcaster/auth-kit";
 import {
     Card,
     CardHeader,
@@ -25,12 +26,7 @@ import {
     Avatar
 } from "@nextui-org/react";
 
-const sendTranstaction = async (address: string, amount: string) => {
-    const result = await sendTransaction(config, {
-        to: `0x${address}`,
-        value: parseEther(amount),
-    })
-}
+
 const ConnectWallet = () => {
     const { isConnected } = useAccount()
     if (isConnected) return <Account />
@@ -38,12 +34,69 @@ const ConnectWallet = () => {
 }
 
 export function PayoutDetail({ payout }: { payout: any }) {
-    const [selectedOption, setSelectedOption] = useState(-1);
-
+    const { data: session } = useSession();
     const { address } = useAccount()
     const { disconnect } = useDisconnect()
+    const [error, setError] = useState(false);
+    const { data: hash, isPending, writeContract, error: err } = useWriteContract()
+
+    const getNonce = useCallback(async () => {
+        const nonce = await getCsrfToken();
+        if (!nonce) throw new Error("Unable to generate nonce");
+        return nonce;
+    }, []);
+
+    const handleSuccess = useCallback(
+        (res: StatusAPIResponse) => {
+            signIn("credentials", {
+                message: res.message,
+                signature: res.signature,
+                name: res.fid,
+                pfp: res.pfpUrl,
+                redirect: false,
+            });
+        },
+        []
+    );
+    const abi = [{ "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }, { "internalType": "uint256", "name": "_totalAmount", "type": "uint256" }], "name": "airdropERC20", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_nft", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_tokenIds", "type": "uint256[]" }], "name": "airdropERC721", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "airdropETH", "outputs": [], "stateMutability": "payable", "type": "function" }]
+    const sendTranstaction = async (user: any, totalAmount: any) => {
+        const address = user.map((obj: any) => obj.custodyAddress)
+        const allocations = user.map((obj: any) => parseEther(obj.allocations))
+        console.log(address, allocations)
+        const contractAddress = '0x09350F89e2D7B6e96bA730783c2d76137B045FEF'
+        writeContract({
+            address: contractAddress,
+            abi,
+            functionName: 'airdropETH',
+            args: [address, allocations],
+        })
+    }
+
+    const { isLoading: isConfirming, isSuccess: isConfirmed } =
+        useWaitForTransactionReceipt({
+            hash,
+        })
     return (
         <div className="">
+            <div style={{ position: "fixed", top: "12px", right: "12px" }}>
+                {session ? (
+                    <button
+                        type="button"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        onClick={() => signOut()}
+                    >
+                        Sign out
+                    </button>
+                ) : (
+                    <SignInButton
+                        nonce={getNonce}
+                        onSuccess={handleSuccess}
+                        onError={() => setError(true)}
+                        onSignOut={() => signOut()}
+                    />
+                )}
+                {error && <div>Unable to sign in at this time.</div>}
+            </div>
             <Button
                 href="/"
                 as={Link}
@@ -105,9 +158,16 @@ export function PayoutDetail({ payout }: { payout: any }) {
                     </>
                 )}
                 {address ? <>
-                    <div>
-                        <button onClick={() => disconnect()} className="bg-blue-500 mr-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Disconnect</button></div>
-                </> : <ConnectWallet />}
+                    <>
+                        <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>Payout</Button>
+                        <Button onClick={() => disconnect()} >Disconnect</Button>
+                        {err && (
+                            <div className="max-w-[400px]">Error: {(err as BaseError).shortMessage || err.message}</div>
+                        )}
+                    </>
+
+                </> : <ConnectWallet />
+                }
             </div>
         </div>
     );

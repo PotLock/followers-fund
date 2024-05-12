@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { Connector, useConnect } from 'wagmi'
-
+import {
+  Button,
+} from "@nextui-org/react";
 export function WalletOptions() {
   const { connectors, connect } = useConnect()
 
@@ -30,8 +32,8 @@ function WalletOption({
   }, [connector])
 
   return (
-    <button type='button' disabled={!ready} onClick={onClick}  className="bg-blue-500 mr-2 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    <Button type='button' disabled={!ready} onClick={onClick} >
       {connector.name}
-    </button>
+    </Button>
   )
 }
