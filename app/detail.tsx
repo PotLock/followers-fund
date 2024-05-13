@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { waitForTransactionReceipt, getChainId, switchChain } from '@wagmi/core'
-import { parseEther, parseGwei } from 'viem'
+import { waitForTransactionReceipt, getChainId, switchChain , readContract } from '@wagmi/core'
+import { erc20Abi, parseEther, parseGwei } from 'viem'
 import { config } from './config'
 import { Account } from './account'
 import { WalletOptions } from './wallet-options'
-import { useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt, type BaseError } from 'wagmi'
+import { useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt, type BaseError  } from 'wagmi'
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
 import {
     SignInButton,
@@ -38,7 +38,231 @@ export function PayoutDetail({ payout }: { payout: any }) {
     const { address } = useAccount()
     const { disconnect } = useDisconnect()
     const [error, setError] = useState(false);
+    const abi = [{ "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }, { "internalType": "uint256", "name": "_totalAmount", "type": "uint256" }], "name": "airdropERC20", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_nft", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_tokenIds", "type": "uint256[]" }], "name": "airdropERC721", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "airdropETH", "outputs": [], "stateMutability": "payable", "type": "function" }]
+    const abiErc20 = [
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "name",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "_spender",
+                    "type": "address"
+                },
+                {
+                    "name": "_value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "approve",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "totalSupply",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "_from",
+                    "type": "address"
+                },
+                {
+                    "name": "_to",
+                    "type": "address"
+                },
+                {
+                    "name": "_value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "transferFrom",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "decimals",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint8"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "name": "_owner",
+                    "type": "address"
+                }
+            ],
+            "name": "balanceOf",
+            "outputs": [
+                {
+                    "name": "balance",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "symbol",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "_to",
+                    "type": "address"
+                },
+                {
+                    "name": "_value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "transfer",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "name": "_owner",
+                    "type": "address"
+                },
+                {
+                    "name": "_spender",
+                    "type": "address"
+                }
+            ],
+            "name": "allowance",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "fallback"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "name": "owner",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "name": "spender",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "name": "value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Approval",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "indexed": true,
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "name": "value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Transfer",
+            "type": "event"
+        }
+    ]
     const { data: hash, isPending, writeContract, writeContractAsync, error: err } = useWriteContract()
+
     const chainId = getChainId(config)
     const getNonce = useCallback(async () => {
         const nonce = await getCsrfToken();
@@ -58,46 +282,94 @@ export function PayoutDetail({ payout }: { payout: any }) {
         },
         []
     );
+
     
-    const abi = [{ "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }, { "internalType": "uint256", "name": "_totalAmount", "type": "uint256" }], "name": "airdropERC20", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_nft", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_tokenIds", "type": "uint256[]" }], "name": "airdropERC721", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "airdropETH", "outputs": [], "stateMutability": "payable", "type": "function" }]
     const sendTranstaction = async (user: any, totalAmount: any) => {
         const address = user.map((obj: any) => obj.custodyAddress)
         const allocations = user.map((obj: any) => parseEther(obj.allocations));
-       
+
         if (chainId == payout.network) {
             const contractAddress =
                 payout.network == 1 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
                     payout.network == 11155111 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
                         payout.network == 8453 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
                             payout.network == 84532 ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
-                                    '';
+                                '';
 
-            console.log("contractAddress",contractAddress)
-            const tx = await writeContractAsync({
-                address: `0x${contractAddress.replace('0x', '')}`,
-                abi,
-                functionName: 'airdropETH',
-                args: [address, allocations],
-                chainId: chainId,
-                value: parseEther(totalAmount),
-            })
-            const transactionReceipt = await waitForTransactionReceipt(config, {
-                chainId: chainId,
-                hash: tx,
-            })
-
-            if (transactionReceipt.status == 'success') {
-                payout.payout_status = true;
-                const response = await fetch('/api/update-payout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payout), // Replace with your actual data
+            console.log("contractAddress", contractAddress)
+            if (payout.token == 'ethereum') {
+                const tx = await writeContractAsync({
+                    address: `0x${contractAddress.slice(2)}`,
+                    abi,
+                    functionName: 'airdropETH',
+                    args: [address, allocations],
+                    chainId: chainId,
+                    value: parseEther(totalAmount),
+                })
+                const transactionReceipt = await waitForTransactionReceipt(config, {
+                    chainId: chainId,
+                    hash: tx,
+                })
+                if (transactionReceipt.status == 'success') {
+                    payout.payout_status = true;
+                    const response = await fetch('/api/update-payout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payout), // Replace with your actual data
+                    });
+                }
+            } else {
+                console.log(address)
+                const allowance = await readContract(config,{
+                    address: payout.tokenAddress,
+                    abi : abiErc20,
+                    functionName: "allowance",
+                    args: [`0x${ address[0].slice(2)}`, `0x${payout.tokenAddress?.slice(2)}`],
                 });
+                console.log(allowance);
+                if (allowance as any >= payout.amount) {
+                    const tx = await writeContractAsync({
+                        address: `0x${contractAddress.slice(2)}`,
+                        abi,
+                        functionName: 'airdropERC20',
+                        args: [payout.tokenAddress , address, allocations , payout.amount],
+                        chainId: chainId,
+                        value: parseEther(totalAmount),
+                    })
+                    const transactionReceipt = await waitForTransactionReceipt(config, {
+                        chainId: chainId,
+                        hash: tx,
+                    })
+                    if (transactionReceipt.status == 'success') {
+                        payout.payout_status = true;
+                        const response = await fetch('/api/update-payout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payout), // Replace with your actual data
+                        });
+                    }
+                }else{
+                    console.log("payout.totalAmount",payout.amount)
+                    const tx = await writeContractAsync({
+                        address: `0x${payout.tokenAddress.slice(2)}`,
+                        abi:erc20Abi,
+                        functionName: 'approve',
+                        args: [payout.tokenAddress , parseEther(payout.amount)],
+                        chainId: chainId,
+                    })
+                }
+
             }
+
+
+
+
         } else {
-            await switchChain(config, { chainId: parseInt(payout.network) })
+            await switchChain(config, { chainId: parseInt(payout.network) as 1 | 11155111 | 8453 | 84532 | 81457 })
         }
 
     }
@@ -188,10 +460,11 @@ export function PayoutDetail({ payout }: { payout: any }) {
                 {payout.payout_status == true && (
                     <Button isDisabled={true}>Paid</Button>
                 )}
+                {/* add approve token */}
                 {address && payout.payout_status == false &&
                     <>
 
-                        <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>{ payout.network == chainId ?  "Payout" : "Switch Chain"}</Button>
+                        <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>{payout.network == chainId ? "Payout" : "Switch Chain"}</Button>
                         <Button onClick={() => disconnect()} >Disconnect</Button>
                         {err && (
                             <div className="max-w-[400px]">Error: {(err as BaseError).shortMessage || err.message}</div>
