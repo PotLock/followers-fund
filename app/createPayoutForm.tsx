@@ -1,6 +1,6 @@
 import { Select, SelectItem, Avatar, Chip, User, Image, Divider, Input, Button, useDisclosure, user, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/react";
 import { Card, CardHeader, CardBody, CardFooter } from "@nextui-org/card";
-import { useOptimistic, useRef, useState, useTransition, useEffect, use } from "react";
+import { useOptimistic, useRef, useState, useTransition, useEffect, useMemo } from "react";
 import { useRouter } from 'next/navigation';
 
 import { v4 as uuidv4 } from "uuid";
@@ -13,11 +13,14 @@ export const fundType = [
 export const tokenType = [
     { label: "Ethereum", value: "ethereum", description: "Ethereum" },
     { label: "Address Token", value: "token", description: "Token" },
+    
 ];
 
 export const network = [
-    { label: "Ethereum", value: "ethereum", description: "Ethereum" },
-    { label: "Base", value: "Base", description: "Base" },
+    { label: "Ethereum", value: 1, description: "Ethereum" },
+    { label: "Sepolia", value: 11155111, description: "sepolia" },
+    { label: "Base", value: 8453, description: "Base" },
+    { label: "Base Sepolia", value: 84532, description: "basesepolia" },
 ];
 
 function removeCommonElements(a: any, b: any) {
@@ -39,8 +42,8 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [userFollow, setUserFollow] = useState([]);
     const [selectUsers, setSelectUsers] = useState([]);
     const [selectType, setSelectType] = useState("");
-    const [selectToken, setSelectToken] = useState(null);
-    const [selectNetwork, setSelectNetwork] = useState(null);
+    const [selectToken, setSelectToken] = useState("");
+    const [selectNetwork, setSelectNetwork] = useState(0);
     const [filterUserFollow, setFilterUserFollow] = useState([]);
     const [filterData, setFilterData] = useState([]);
     const [totalAmount, setTotalAmount] = useState("0");
@@ -69,7 +72,7 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
     }
     const handleSelectionType = async (e: any) => {
-        console.log("setSelectType",e.target.value == "")
+        console.log("setSelectType", e.target.value == "")
         setSelectType(e.target.value)
     }
     const handleSelectionChangeSelectNetwork = async (e: any) => {
@@ -80,9 +83,13 @@ export function PayoutCreateForm1({ fid }: Props) {
         console.log(e.target.value)
         setSelectToken(e.target.value)
     }
+    const handleChangeAmount = async (e: any) => {
+        console.log(e.target.value)
+        setSelectToken(e.target.value)
+    }
     const handleSelectionChange = async (e: any) => {
         const users = e.target.value.split(",");
-   
+
         let countTotalFollower = 0;
         if (users[0] !== '') {
             const usersSelected: any = [];
@@ -137,7 +144,9 @@ export function PayoutCreateForm1({ fid }: Props) {
                 custodyAddress: user.custodyAddress,
                 username: user.username,
                 matched: removeCommonElements(user.follower, filterData).length,
-                allocations: (parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0
+                network:selectNetwork,
+                tokenAddress:tokenAddress,
+                allocations: (parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6)
             }
             usersArr.push(userObj)
 
@@ -150,12 +159,12 @@ export function PayoutCreateForm1({ fid }: Props) {
             id: uuidv4(),
             type: selectType,
             amount: totalAmount,
-            network: '',
+            network: selectNetwork,
             token: selectToken,
             tokenAddress: tokenAddress,
             user_created: user,
             created_at: new Date().getTime(),
-            payout_status:false,
+            payout_status: false,
         }
         const response = await fetch('/api/create-payout', {
             method: 'POST',
@@ -174,6 +183,10 @@ export function PayoutCreateForm1({ fid }: Props) {
         setIsLoading(false)
         console.log("data", data);
     }
+    const isInvalid = useMemo(() => {
+        if (totalAmount === "") return false;
+        return parseFloat(totalAmount) > 0.000001 ? false : true;
+      }, [totalAmount]);
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     return (
         <>
@@ -322,6 +335,8 @@ export function PayoutCreateForm1({ fid }: Props) {
                                         )}
 
                                         <Input
+                                            isInvalid={isInvalid}
+                                            color={isInvalid ? "danger" : "success"}
                                             type="number"
                                             label="Amount"
                                             value={totalAmount}
@@ -329,6 +344,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                             placeholder="0.00"
                                             variant="bordered"
                                         />
+
                                         {selectUsers.length > 0 && selectUsers.map((user: any) =>
                                             <>
                                                 <Card className="max-w-[400px]">
@@ -336,7 +352,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                                         <div className="flex gap-5">
                                                             <Avatar isBordered radius="full" size="md" src={user.pfp} />
                                                             <div className="flex flex-col gap-1 items-start justify-center">
-                                                                <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseInt(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(2) || 0}</h4>
+                                                                <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6) || 0}</h4>
                                                                 <h5 className="text-small tracking-tight text-default-400">{user.custodyAddress}</h5>
                                                             </div>
 
@@ -356,7 +372,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Button
                                     color="primary"
                                     isLoading={isLoading}
-                                    isDisabled={ selectUsers.length == 0 || selectType == ""  }
+                                    isDisabled={selectUsers.length == 0 || selectType == "" || selectNetwork == 0 || selectToken == "" || parseFloat(totalAmount) <  0.000001 }
                                     spinner={
                                         <svg
                                             className="animate-spin h-5 w-5 text-current"

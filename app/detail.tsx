@@ -1,13 +1,13 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
-import { sendTransaction, writeContract } from '@wagmi/core'
-import { parseEther } from 'viem'
+import { useState, useCallback, useEffect } from "react";
+import { waitForTransactionReceipt, getChainId, switchChain } from '@wagmi/core'
+import { parseEther, parseGwei } from 'viem'
 import { config } from './config'
 import { Account } from './account'
 import { WalletOptions } from './wallet-options'
-import { useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt ,type BaseError} from 'wagmi'
+import { useAccount, useDisconnect, useWriteContract, useWaitForTransactionReceipt, type BaseError } from 'wagmi'
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
 import {
     SignInButton,
@@ -38,8 +38,8 @@ export function PayoutDetail({ payout }: { payout: any }) {
     const { address } = useAccount()
     const { disconnect } = useDisconnect()
     const [error, setError] = useState(false);
-    const { data: hash, isPending, writeContract, error: err } = useWriteContract()
-
+    const { data: hash, isPending, writeContract, writeContractAsync, error: err } = useWriteContract()
+    const chainId = getChainId(config)
     const getNonce = useCallback(async () => {
         const nonce = await getCsrfToken();
         if (!nonce) throw new Error("Unable to generate nonce");
@@ -58,24 +58,51 @@ export function PayoutDetail({ payout }: { payout: any }) {
         },
         []
     );
+    
     const abi = [{ "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }, { "internalType": "uint256", "name": "_totalAmount", "type": "uint256" }], "name": "airdropERC20", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_nft", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_tokenIds", "type": "uint256[]" }], "name": "airdropERC721", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "airdropETH", "outputs": [], "stateMutability": "payable", "type": "function" }]
     const sendTranstaction = async (user: any, totalAmount: any) => {
         const address = user.map((obj: any) => obj.custodyAddress)
-        const allocations = user.map((obj: any) => parseEther(obj.allocations))
-        console.log(address, allocations)
-        const contractAddress = '0x09350F89e2D7B6e96bA730783c2d76137B045FEF'
-        writeContract({
-            address: contractAddress,
-            abi,
-            functionName: 'airdropETH',
-            args: [address, allocations],
-        })
+        const allocations = user.map((obj: any) => parseEther(obj.allocations));
+       
+        if (chainId == payout.network) {
+            const contractAddress =
+                payout.network == 1 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                    payout.network == 11155111 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                        payout.network == 8453 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                            payout.network == 84532 ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
+                                    '';
+
+            console.log("contractAddress",contractAddress)
+            const tx = await writeContractAsync({
+                address: `0x${contractAddress.replace('0x', '')}`,
+                abi,
+                functionName: 'airdropETH',
+                args: [address, allocations],
+                chainId: chainId,
+                value: parseEther(totalAmount),
+            })
+            const transactionReceipt = await waitForTransactionReceipt(config, {
+                chainId: chainId,
+                hash: tx,
+            })
+
+            if (transactionReceipt.status == 'success') {
+                payout.payout_status = true;
+                const response = await fetch('/api/update-payout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payout), // Replace with your actual data
+                });
+            }
+        } else {
+            await switchChain(config, { chainId: parseInt(payout.network) })
+        }
+
     }
 
-    const { isLoading: isConfirming, isSuccess: isConfirmed } =
-        useWaitForTransactionReceipt({
-            hash,
-        })
+
     return (
         <div className="">
             <div style={{ position: "fixed", top: "12px", right: "12px" }}>
@@ -157,16 +184,22 @@ export function PayoutDetail({ payout }: { payout: any }) {
                         </Card>
                     </>
                 )}
-                {address ? <>
+                {/* check session with user created */}
+                {payout.payout_status == true && (
+                    <Button isDisabled={true}>Paid</Button>
+                )}
+                {address && payout.payout_status == false &&
                     <>
-                        <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>Payout</Button>
+
+                        <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>{ payout.network == chainId ?  "Payout" : "Switch Chain"}</Button>
                         <Button onClick={() => disconnect()} >Disconnect</Button>
                         {err && (
                             <div className="max-w-[400px]">Error: {(err as BaseError).shortMessage || err.message}</div>
                         )}
                     </>
-
-                </> : <ConnectWallet />
+                }
+                {!address &&
+                    <ConnectWallet />
                 }
             </div>
         </div>

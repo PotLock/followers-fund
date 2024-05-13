@@ -4,11 +4,11 @@ import {
     cookieStorage,
     createStorage
 } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
+import { arbitrum, base, baseSepolia, blast, bsc, degen, mainnet, optimism, polygon, sepolia, zora } from 'wagmi/chains'
 import {  metaMask ,coinbaseWallet } from 'wagmi/connectors'
 
 export const config = createConfig({
-    chains: [mainnet, sepolia],
+    chains: [mainnet, sepolia , base , baseSepolia , blast ],
     ssr: true,
     storage: createStorage({
         storage: cookieStorage,
@@ -21,5 +21,8 @@ export const config = createConfig({
     transports: {
         [mainnet.id]: http(),
         [sepolia.id]: http(),
+        [base.id]: http(),
+        [baseSepolia.id] : http(),
+        [blast.id] : http(),
     },
 })

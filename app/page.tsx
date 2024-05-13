@@ -1,7 +1,5 @@
 "use client";
 import "@farcaster/auth-kit/styles.css";
-
-import Head from "next/head";
 import { useSession, signIn, signOut, getCsrfToken } from "next-auth/react";
 import {
   Card,
@@ -138,12 +136,15 @@ function Profile() {
             </CardHeader>
             <Divider />
             <CardBody>
-              <p>{payout.title}</p>
+            <p>{payout.title}</p>
+              <Link href={`/payouts/${payout.id}`}>
+              
               <Image
                 alt="Woman listing to music"
                 className="object-cover"
                 src={`http://localhost:3000/api/image?id=${payout.id}`}
               />
+              </Link>
             </CardBody>
             <Divider />
             <CardFooter>

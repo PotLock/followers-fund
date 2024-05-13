@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     // @ts-ignore
                     const matched = user.matched; 
                     const percentOfTotal = totalMatched ? Math.round(matched / totalMatched * 100) : 0;
-                    let text = showResults ? `${percentOfTotal}%: ${user.username} (${matched} Matched) ${(parseInt(payout.amount)  *percentOfTotal)/100} ${payout.token}` : `${index + 1}. ${user.username}-(${matched} Matched)-(${(parseInt(payout.amount) *percentOfTotal)/100} ${payout.token})`
+                    let text = showResults ? `${percentOfTotal}%: ${user.username} (${matched} Matched) ${(parseFloat(payout.amount)  *percentOfTotal)/100} ${payout.token}` : `${index + 1}. ${user.username}-(${matched} Matched)-(${(parseFloat(payout.amount) *percentOfTotal)/100} ${payout.token})`
                     return { user, matched, text, percentOfTotal }
                 })
         };
