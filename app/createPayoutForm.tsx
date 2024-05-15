@@ -13,14 +13,14 @@ export const fundType = [
 export const tokenType = [
     { label: "Ethereum", value: "ethereum", description: "Ethereum" },
     { label: "Address Token", value: "token", description: "Token" },
-    
+
 ];
 
 export const network = [
     { label: "Ethereum", value: "1", description: "Ethereum" },
     { label: "Sepolia", value: "11155111", description: "sepolia" },
     { label: "Base", value: "8453", description: "Base" },
-    { label: "Base Sepolia", value: "84532" , description: "basesepolia" },
+    { label: "Base Sepolia", value: "84532", description: "basesepolia" },
 ];
 
 function removeCommonElements(a: any, b: any) {
@@ -52,6 +52,7 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [title, setTitle] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter()
+    
     const handleSelectionChangeFilter = async (e: any) => {
         const users = e.target.value.split(",");
         if (users[0] !== '') {
@@ -83,12 +84,12 @@ export function PayoutCreateForm1({ fid }: Props) {
 
     const handleSelectionChange = async (e: any) => {
         const users = e.target.value.split(",");
-
+        
         let countTotalFollower = 0;
-        if (users[0] !== '') {
-            const usersSelected: any = [];
-            const dataUsersFollow: any = [];
-            for (const user of users) {
+        const usersSelected: any = [];
+        const dataUsersFollow: any = [];
+        for (const user of users) {
+            if (user !== '') {
                 const res = await fetch(`/api/userflow?fid=${user.split("|")[0]}`)
                 const data = await res.json()
 
@@ -108,22 +109,22 @@ export function PayoutCreateForm1({ fid }: Props) {
 
                 usersSelected.push(userObject)
             }
-            setTotalFollower(countTotalFollower)
-            setSelectUsers(usersSelected);
 
-            const idMap = new Map();
-            const filteredData = dataUsersFollow.filter((item: any) => {
-                if (!idMap.has(item.fid)) {
-                    idMap.set(item.fid, true);
-                    return true;
-                }
-                return false;
-            });
-            setFilterUserFollow(filteredData)
-        } else {
-            setFilterUserFollow([])
         }
+       
 
+        const idMap = new Map();
+        const filteredData = dataUsersFollow.filter((item: any) => {
+            if (!idMap.has(item.fid)) {
+                idMap.set(item.fid, true);
+                return true;
+            }
+            return false;
+        });
+        console.log("filteredData",filteredData,selectUsers)
+        setFilterUserFollow(filteredData)
+        setTotalFollower(countTotalFollower)
+        setSelectUsers(usersSelected)
     };
 
     const createPayoutButton = async () => {
@@ -138,8 +139,8 @@ export function PayoutCreateForm1({ fid }: Props) {
                 custodyAddress: user.custodyAddress,
                 username: user.username,
                 matched: removeCommonElements(user.follower, filterData).length,
-                network:parseInt(selectNetwork),
-                tokenAddress:tokenAddress,
+                network: parseInt(selectNetwork),
+                tokenAddress: tokenAddress,
                 allocations: (parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6)
             }
             usersArr.push(userObj)
@@ -179,7 +180,7 @@ export function PayoutCreateForm1({ fid }: Props) {
     const isInvalid = useMemo(() => {
         if (totalAmount === "") return false;
         return parseFloat(totalAmount) > 0.000001 ? false : true;
-      }, [totalAmount]);
+    }, [totalAmount]);
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
     return (
         <>
@@ -326,7 +327,6 @@ export function PayoutCreateForm1({ fid }: Props) {
                                                 variant="bordered"
                                             />
                                         )}
-
                                         <Input
                                             isInvalid={isInvalid}
                                             color={isInvalid ? "danger" : "success"}
@@ -337,23 +337,18 @@ export function PayoutCreateForm1({ fid }: Props) {
                                             placeholder="0.00"
                                             variant="bordered"
                                         />
-
-                                        {selectUsers.length > 0 && selectUsers.map((user: any) =>
-                                            <>
-                                                <Card className="max-w-[400px]">
-                                                    <CardHeader className="flexjustify-between">
-                                                        <div className="flex gap-5">
-                                                            <Avatar isBordered radius="full" size="md" src={user.pfp} />
-                                                            <div className="flex flex-col gap-1 items-start justify-center">
-                                                                <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6) || 0}</h4>
-                                                                <h5 className="text-small tracking-tight text-default-400">{user.custodyAddress}</h5>
-                                                            </div>
-
+                                        {selectUsers && selectUsers.map((user: any) =>
+                                            <Card className="max-w-[400px]">
+                                                <CardHeader className="flexjustify-between">
+                                                    <div className="flex gap-5">
+                                                        <Avatar isBordered radius="full" size="md" src={user.pfp} />
+                                                        <div className="flex flex-col gap-1 items-start justify-center">
+                                                            <h4 className="text-small font-semibold leading-none text-default-600">{user.username} - Matched : {removeCommonElements(user.follower, filterData).length} - Allocations : {(parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6) || 0}</h4>
+                                                            <h5 className="text-small tracking-tight text-default-400">{user.custodyAddress}</h5>
                                                         </div>
-
-                                                    </CardHeader>
-                                                </Card>
-                                            </>
+                                                    </div>
+                                                </CardHeader>
+                                            </Card>
                                         )}
                                     </>
                                 )}
@@ -365,7 +360,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Button
                                     color="primary"
                                     isLoading={isLoading}
-                                    isDisabled={selectUsers.length == 0 || selectType == "" || selectNetwork == '0' || selectToken == "" || parseFloat(totalAmount) <  0.000001 }
+                                    isDisabled={selectUsers.length == 0 || selectType == "" || selectNetwork == '0' || selectToken == "" || parseFloat(totalAmount) < 0.000001}
                                     spinner={
                                         <svg
                                             className="animate-spin h-5 w-5 text-current"
