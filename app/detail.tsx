@@ -245,7 +245,7 @@ export function PayoutDetail({ payout }: { payout: any }) {
                     <Image
                         alt="Woman listing to music"
                         className="object-cover"
-                        src={`${process.env.NEXT_URL}/api/image?id=${payout.id}`}
+                        src={`/api/image?id=${payout.id}`}
                     />
                 </CardBody>
                 <Divider />

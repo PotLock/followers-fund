@@ -142,7 +142,7 @@ function Profile() {
               <Image
                 alt="Woman listing to music"
                 className="object-cover"
-                src={`${process.env.NEXT_URL}/api/image?id=${payout.id}`}
+                src={`/api/image?id=${payout.id}`}
               />
               </Link>
             </CardBody>
