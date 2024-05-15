@@ -26,7 +26,6 @@ import {
     Avatar
 } from "@nextui-org/react";
 
-
 const ConnectWallet = () => {
     const { isConnected } = useAccount()
     if (isConnected) return <Account />
@@ -40,9 +39,11 @@ export function PayoutDetail({ payout }: { payout: any }) {
     const [error, setError] = useState(false);
     const abi = [{ "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }, { "internalType": "uint256", "name": "_totalAmount", "type": "uint256" }], "name": "airdropERC20", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_nft", "type": "address" }, { "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_tokenIds", "type": "uint256[]" }], "name": "airdropERC721", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address[]", "name": "_addresses", "type": "address[]" }, { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" }], "name": "airdropETH", "outputs": [], "stateMutability": "payable", "type": "function" }]
     const abiErc20 = [{ "constant": true, "inputs": [], "name": "name", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_spender", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "totalSupply", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_from", "type": "address" }, { "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [], "name": "decimals", "outputs": [{ "name": "", "type": "uint8" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }], "name": "balanceOf", "outputs": [{ "name": "balance", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": true, "inputs": [], "name": "symbol", "outputs": [{ "name": "", "type": "string" }], "payable": false, "stateMutability": "view", "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }], "name": "transfer", "outputs": [{ "name": "", "type": "bool" }], "payable": false, "stateMutability": "nonpayable", "type": "function" }, { "constant": true, "inputs": [{ "name": "_owner", "type": "address" }, { "name": "_spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "", "type": "uint256" }], "payable": false, "stateMutability": "view", "type": "function" }, { "payable": true, "stateMutability": "payable", "type": "fallback" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "owner", "type": "address" }, { "indexed": true, "name": "spender", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "name": "from", "type": "address" }, { "indexed": true, "name": "to", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }]
-    const { data: hash, isPending, writeContract, writeContractAsync, error: err } = useWriteContract()
+    const { data: hash, isPending, writeContractAsync, error: err } = useWriteContract()
     const chainId = getChainId(config)
     const [isAllowance, setIsAllowance] = useState(true);
+    const [isPaid, setIsPaid] = useState(false);
+
     const getNonce = useCallback(async () => {
         const nonce = await getCsrfToken();
         if (!nonce) throw new Error("Unable to generate nonce");
@@ -61,13 +62,14 @@ export function PayoutDetail({ payout }: { payout: any }) {
         }, []);
 
     const checkAllowance = async () => {
-        if (address) {
+        if (address && payout.token !== 'ethereum') {
             const contractAddress =
-                payout.network == 1 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                    payout.network == 11155111 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                        payout.network == 8453 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                            payout.network == 84532 ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
+                payout.network == '1' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                    payout.network == '11155111' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                        payout.network == '8453' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                            payout.network == '84532' ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
                                 '';
+            console.log("contractAddress",contractAddress)
             const allowance = await readContract(config, {
                 address: payout.tokenAddress,
                 abi: abiErc20,
@@ -78,10 +80,17 @@ export function PayoutDetail({ payout }: { payout: any }) {
             if (allowance as any < parseEther(payout.amount)) {
                 setIsAllowance(false)
             }
+
+        }
+        const getPaid: any = await fetch(`/api/update-payout?payout_id=${payout.id}`);
+        const { result } = await getPaid.json();
+        if (result) {
+            setIsPaid(true)
         }
     }
     useEffect(() => {
         checkAllowance();
+
     }, [])
 
 
@@ -92,32 +101,37 @@ export function PayoutDetail({ payout }: { payout: any }) {
 
         if (chainId == payout.network) {
             const contractAddress =
-                payout.network == 1 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                    payout.network == 11155111 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                        payout.network == 8453 ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
-                            payout.network == 84532 ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
+                payout.network == '1' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                    payout.network == '11155111' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                        payout.network == '8453' ? '0x09350F89e2D7B6e96bA730783c2d76137B045FEF' :
+                            payout.network == '84532' ? '0xf6c3555139aeA30f4a2be73EBC46ba64BAB8ac12' :
                                 '';
             if (payout.token == 'ethereum') {
                 const tx = await writeContractAsync({
                     address: `0x${contractAddress.slice(2)}`,
                     abi,
                     functionName: 'airdropETH',
-                    args: [address, allocations],
+                    args: [userAddress, allocations],
                     chainId: chainId,
-                    value: parseEther(totalAmount),
+                    value: parseEther(payout.amount),
                 })
                 const transactionReceipt = await waitForTransactionReceipt(config, {
                     chainId: chainId,
                     hash: tx,
                 })
                 if (transactionReceipt.status == 'success') {
-                    payout.payout_status = true;
+
+                    const receipt: any = {
+                        tx: tx,
+                        payout_id: payout.id,
+                        created_at: new Date().getTime(),
+                    }
                     await fetch('/api/update-payout', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify(payout), // Replace with your actual data
+                        body: JSON.stringify(receipt),
                     });
                 }
             } else {
@@ -129,9 +143,7 @@ export function PayoutDetail({ payout }: { payout: any }) {
                         args: [`0x${address.slice(2)}`, `0x${contractAddress?.slice(2)}`],
                     });
 
-                    console.log("allowance", allowance, address, parseEther(payout.amount))
                     if (allowance as any >= parseEther(payout.amount)) {
-                        console.log('test')
                         const tx = await writeContractAsync({
                             address: `0x${contractAddress.slice(2)}`,
                             abi,
@@ -144,17 +156,20 @@ export function PayoutDetail({ payout }: { payout: any }) {
                             hash: tx,
                         })
                         if (transactionReceipt.status == 'success') {
-                            payout.payout_status = true;
+                            const receipt = {
+                                tx: tx,
+                                payout_id: payout.id,
+                                created_at: new Date().getTime(),
+                            }
                             await fetch('/api/update-payout', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
                                 },
-                                body: JSON.stringify(payout), // Replace with your actual data
+                                body: JSON.stringify(receipt), // Replace with your actual data
                             });
                         }
                     } else {
-                        console.log("payout.totalAmount", payout.amount)
                         const tx = await writeContractAsync({
                             address: `0x${payout.tokenAddress.slice(2)}`,
                             abi: erc20Abi,
@@ -200,14 +215,17 @@ export function PayoutDetail({ payout }: { payout: any }) {
                 )}
                 {error && <div>Unable to sign in at this time.</div>}
             </div>
-            <Button
-                href="/"
-                as={Link}
-                color="primary"
-                variant="solid"
-            >
-                Back
-            </Button>
+            <div className="py-2 grid justify-items-end">
+                <Button
+                    href="/"
+                    as={Link}
+                    color="primary"
+                    variant="solid"
+                >
+                    Back
+                </Button>
+            </div>
+
             <Card className="max-w-[400px] mt-2">
                 <CardHeader className="flex gap-3">
                     <Image
@@ -260,14 +278,11 @@ export function PayoutDetail({ payout }: { payout: any }) {
                         </Card>
                     </>
                 )}
-                {/* check session with user created */}
-                {payout.payout_status == true && (
+                {isPaid && (
                     <Button isDisabled={true}>Paid</Button>
                 )}
-                {/* add approve token */}
-                {address && payout.payout_status == false &&
+                {address && isPaid == false &&
                     <>
-
                         <Button onClick={() => sendTranstaction(payout.user, payout.amount)} isDisabled={isPending}>{payout.network == chainId && isAllowance ? "Payout" : payout.network == chainId && isAllowance == false ? "Approve" : "Switch Chain"}</Button>
                         <Button onClick={() => disconnect()} >Disconnect</Button>
                         {err && (

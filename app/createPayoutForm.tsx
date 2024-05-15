@@ -17,10 +17,10 @@ export const tokenType = [
 ];
 
 export const network = [
-    { label: "Ethereum", value: 1, description: "Ethereum" },
-    { label: "Sepolia", value: 11155111, description: "sepolia" },
-    { label: "Base", value: 8453, description: "Base" },
-    { label: "Base Sepolia", value: 84532, description: "basesepolia" },
+    { label: "Ethereum", value: "1", description: "Ethereum" },
+    { label: "Sepolia", value: "11155111", description: "sepolia" },
+    { label: "Base", value: "8453", description: "Base" },
+    { label: "Base Sepolia", value: "84532" , description: "basesepolia" },
 ];
 
 function removeCommonElements(a: any, b: any) {
@@ -43,7 +43,7 @@ export function PayoutCreateForm1({ fid }: Props) {
     const [selectUsers, setSelectUsers] = useState([]);
     const [selectType, setSelectType] = useState("");
     const [selectToken, setSelectToken] = useState("");
-    const [selectNetwork, setSelectNetwork] = useState(0);
+    const [selectNetwork, setSelectNetwork] = useState("1");
     const [filterUserFollow, setFilterUserFollow] = useState([]);
     const [filterData, setFilterData] = useState([]);
     const [totalAmount, setTotalAmount] = useState("0");
@@ -72,21 +72,15 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
     }
     const handleSelectionType = async (e: any) => {
-        console.log("setSelectType", e.target.value == "")
         setSelectType(e.target.value)
     }
     const handleSelectionChangeSelectNetwork = async (e: any) => {
-        console.log(e.target.value)
         setSelectNetwork(e.target.value)
     }
     const handleSelectionChangeSelectToken = async (e: any) => {
-        console.log(e.target.value)
         setSelectToken(e.target.value)
     }
-    const handleChangeAmount = async (e: any) => {
-        console.log(e.target.value)
-        setSelectToken(e.target.value)
-    }
+
     const handleSelectionChange = async (e: any) => {
         const users = e.target.value.split(",");
 
@@ -144,7 +138,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                 custodyAddress: user.custodyAddress,
                 username: user.username,
                 matched: removeCommonElements(user.follower, filterData).length,
-                network:selectNetwork,
+                network:parseInt(selectNetwork),
                 tokenAddress:tokenAddress,
                 allocations: (parseFloat(totalAmount) * (removeCommonElements(user.follower, filterData).length / (totalFollower - (user.follower.length - removeCommonElements(user.follower, filterData).length)))).toFixed(6)
             }
@@ -159,7 +153,7 @@ export function PayoutCreateForm1({ fid }: Props) {
             id: uuidv4(),
             type: selectType,
             amount: totalAmount,
-            network: selectNetwork,
+            network: parseInt(selectNetwork),
             token: selectToken,
             tokenAddress: tokenAddress,
             user_created: user,
@@ -181,7 +175,6 @@ export function PayoutCreateForm1({ fid }: Props) {
         }
         // Check data before creat payout
         setIsLoading(false)
-        console.log("data", data);
     }
     const isInvalid = useMemo(() => {
         if (totalAmount === "") return false;
@@ -372,7 +365,7 @@ export function PayoutCreateForm1({ fid }: Props) {
                                 <Button
                                     color="primary"
                                     isLoading={isLoading}
-                                    isDisabled={selectUsers.length == 0 || selectType == "" || selectNetwork == 0 || selectToken == "" || parseFloat(totalAmount) <  0.000001 }
+                                    isDisabled={selectUsers.length == 0 || selectType == "" || selectNetwork == '0' || selectToken == "" || parseFloat(totalAmount) <  0.000001 }
                                     spinner={
                                         <svg
                                             className="animate-spin h-5 w-5 text-current"

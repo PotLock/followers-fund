@@ -48,7 +48,7 @@ export default async function Page() {
                     }
                 </div>
                 <Link href="/">
-                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded float-left">
+                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ">
                         Create Payout
                     </button>
                 </Link>

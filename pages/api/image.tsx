@@ -24,7 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         let payout: any = await kv.hgetall(`payout:${payoutId}`);
 
-        console.log(payout)
         if (!payout) {
             return res.status(400).send('Missing payout ID');
         }

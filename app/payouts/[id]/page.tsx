@@ -8,7 +8,6 @@ const  getPayout = async(id: string) => {
 
     try {
         let payout: any | null = await kv.hgetall(`payout:${id}`);
-        console.log(payout)
         if (!payout) {
             return null;
         }
@@ -31,7 +30,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
     // read route params
     const id = params.id
-    const payout = await getPayout(id)
+    const payout = await getPayout(id);
 
     const fcMetadata: Record<string, string> = {
         "fc:frame": "vNext",
@@ -71,7 +70,7 @@ function getMeta(
 
 export default async function Page({params}: { params: {id: string}}) {
     const payout = await getPayout(params.id);
-
+    console.log("payout",payout)
     return(
         <>
             <div className="flex flex-col items-center min-h-screen py-2">
