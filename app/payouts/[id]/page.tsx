@@ -1,5 +1,4 @@
 import {kv} from "@vercel/kv";
-import {Payout} from "@/app/types";
 import { PayoutDetail } from "@/app/detail"
 import Head from "next/head";
 import {Metadata, ResolvingMetadata} from "next";
@@ -53,18 +52,6 @@ export async function generateMetadata(
         },
         metadataBase: new URL(process.env['HOST'] || '')
     }
-}
-
-function getMeta(
-    payout: Payout
-) {
-    // This didn't work for some reason
-    return (
-        <Head>
-            <meta property="og:image" content="" key="test"></meta>
-            <meta property="og:title" content="My page title" key="title"/>
-        </Head>
-    );
 }
 
 
