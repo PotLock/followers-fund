@@ -253,8 +253,7 @@ export function PayoutDetail({ payout }: { payout: any }) {
                     <Link
                         isExternal
                         showAnchorIcon
-                        href={`https://warpcast.com/~/compose?text="👤💸 followers.fund quadratically airdrop your followers with the most clout Make the sign in button in Center and the footer 
-                        ❤️ by 🫕 Potlock"&embeds[]=${process.env['HOST']}payouts/${payout.id}`}
+                        href={`https://warpcast.com/~/compose?text="👤💸 followers.fund quadratically airdrop your followers with the most clout Make the sign in button in Center and the footer ❤️ by 🫕 Potlock"&embeds[]=${process.env['HOST']}payouts/${payout.id}`}
                     >
                         Cast
                     </Link>
