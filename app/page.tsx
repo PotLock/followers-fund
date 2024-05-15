@@ -19,7 +19,7 @@ import {
 import { PayoutCreateForm1 } from "./createPayoutForm"
 import { useCallback, useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiProvider} from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { config } from './config'
 
 const queryClient = new QueryClient()
@@ -118,7 +118,7 @@ function Profile() {
   return session ? (
 
     <div className="flex min-h-dvh flex-col">
-       <PayoutCreateForm1 fid={session.user?.name as string} />
+      <PayoutCreateForm1 fid={session.user?.name as string} />
       <div className="flex flex-col max-w-sm ">
         {payouts.map((payout: any) =>
           <Card className="max-w-[400px] mt-2">
@@ -136,14 +136,14 @@ function Profile() {
             </CardHeader>
             <Divider />
             <CardBody>
-            <p>{payout.title}</p>
+              <p>{payout.title}</p>
               <Link href={`/payouts/${payout.id}`}>
-              
-              <Image
-                alt="Woman listing to music"
-                className="object-cover"
-                src={`/api/image?id=${payout.id}`}
-              />
+
+                <Image
+                  alt="Woman listing to music"
+                  className="object-cover"
+                  src={`/api/image?id=${payout.id}`}
+                />
               </Link>
             </CardBody>
             <Divider />
@@ -152,7 +152,7 @@ function Profile() {
                 isExternal
                 showAnchorIcon
                 href={`https://warpcast.com/~/compose?text="👤💸 followers.fund quadratically airdrop your followers with the most clout Make the sign in button in Center and the footer 
-                ❤️ by 🫕 Potlock"&embeds[]=${process.env['HOST']}payouts/${payout.id}`}
+                        ❤️ by 🫕 Potlock"&embeds[]=${process.env['HOST']}payouts/${payout.id}`}
               >
                 Cast
               </Link>
@@ -160,7 +160,7 @@ function Profile() {
           </Card>
         )}
         <div className="p-8">
-         
+
         </div>
       </div>
     </div>
